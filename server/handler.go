@@ -66,8 +66,6 @@ func login(db DbAdapter) gin.HandlerFunc {
 }
 
 func logInUser(user d.User, password string) error {
-	fmt.Println("Password : ", password)
-	fmt.Println("Password Hash: ", user.EncryptedPassword)
 	return bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(password))
 }
 
