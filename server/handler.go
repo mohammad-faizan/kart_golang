@@ -7,6 +7,7 @@ import(
 	. "simple-server/db"
 	d "simple-server/data"
 	"fmt"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type jsonResponse map[string]interface{}
@@ -25,10 +26,21 @@ func login(db DbAdapter) gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		response := jsonResponse{}
-		email := c.Query("email")
+		email := c.PostForm("email")
+		password := c.PostForm("password")
+
+		var validations []string
 
 		if email == "" {
-			response["errors"] = []string{"Provide user email"}
+			validations = append(validations, "Provide user email")
+		}
+
+		if password == "" {
+			validations = append(validations, "Provide user password")
+		}
+
+		if len(validations) > 0 {
+			response["errors"] = validations
 			c.JSON(http.StatusBadRequest, response)
 			return
 		}
@@ -41,9 +53,22 @@ func login(db DbAdapter) gin.HandlerFunc {
 			return
 		}
 
-		response["user"] = user
-		c.JSON(http.StatusOK, response)		
+		err = logInUser(user, password)
+
+		if err != nil {
+			response["errors"] = []string{"username/password invalid"}
+			c.JSON(http.StatusBadRequest, response)
+		}else{
+			response["user"] = user
+			c.JSON(http.StatusOK, response)		
+		}
 	}
+}
+
+func logInUser(user d.User, password string) error {
+	fmt.Println("Password : ", password)
+	fmt.Println("Password Hash: ", user.EncryptedPassword)
+	return bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(password))
 }
 
 func userList(db DbAdapter) gin.HandlerFunc {
@@ -76,9 +101,14 @@ func createUser(db DbAdapter) gin.HandlerFunc {
 			return
 		}
 
-		err := db.CreateUser(user)
+		_, err := db.CreateUser(user)
 
-		response["errors"] = []string{fmt.Sprint(err)}
+		if err != nil {
+			response["errors"] = []string{fmt.Sprint(err)}			
+		} else {
+			response["message"] = "Signed up successfully!"
+		}
+
 		c.JSON(http.StatusOK, response)		
 	}
 }
