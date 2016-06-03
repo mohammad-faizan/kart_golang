@@ -5,6 +5,7 @@ import(
 	"simple-server/db"
 )
 
+const Port = `8000`
 func main(){
 	db, err := db.NewDbConnection()
 
@@ -14,5 +15,5 @@ func main(){
 	}
 
 	server := server.NewServer(db)
-	server.Run(":3000")
+	server.Run(":" + Port)
 }

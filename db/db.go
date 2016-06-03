@@ -39,7 +39,7 @@ func (this *DbAdapter) UserList() ([]d.User, error) {
 }
 
 func (this *DbAdapter) SearchByEmail(email string) (d.User, error) {
-	query := `SELECT id, first_name, last_name, dob, gender, email, encrypted_password from users WHERE email = $1`
+	query := `SELECT id, first_name, last_name, COALESCE(dob, NOW()) as dob, gender, email, encrypted_password from users WHERE email = $1`
 
 	var user d.User
 
